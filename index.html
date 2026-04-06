@@ -1,0 +1,207 @@
+
+<style>
+.sec-title{font-size:15px;font-weight:500;color:var(--color-text-primary);margin:1.5rem 0 .75rem;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.item-row{display:grid;grid-template-columns:2fr 80px 90px 100px 50px;gap:8px;align-items:center;padding:8px 10px;border-radius:var(--border-radius-md);font-size:13px;color:var(--color-text-primary);border:0.5px solid var(--color-border-tertiary);margin-bottom:6px;background:var(--color-background-primary)}
+.item-row:hover{background:var(--color-background-secondary)}
+.item-name{font-weight:500}
+.item-spec{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.col-head{font-size:11px;color:var(--color-text-secondary);font-weight:500}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);margin-top:3px}
+.tag-local{background:var(--color-background-success);color:var(--color-text-success)}
+.tag-import{background:var(--color-background-warning);color:var(--color-text-warning)}
+.tag-critical{background:var(--color-background-danger);color:var(--color-text-danger)}
+.total-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.5rem 0}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.metric-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+.metric-val{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.metric-sub{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.phase-badge{display:inline-block;font-size:11px;padding:2px 10px;border-radius:20px;margin-bottom:8px;background:var(--color-background-info);color:var(--color-text-info);font-weight:500}
+.note-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-size:13px;color:var(--color-text-secondary);margin-top:6px;border-right:3px solid #1D9E75}
+input[type=range]{width:100%}
+.slider-row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px;color:var(--color-text-secondary)}
+.slider-row span{min-width:80px;font-weight:500;color:var(--color-text-primary);text-align:right}
+</style>
+
+<div style="padding:1rem 0">
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem">
+  <div class="slider-row" style="flex-direction:column;align-items:flex-start;gap:4px">
+    <label style="font-size:13px;color:var(--color-text-secondary)">حجم الخزان (م³)</label>
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <input type="range" min="1" max="4" value="1" step="1" id="tank-size" oninput="recalc()">
+      <span id="tank-size-out" style="font-size:14px;font-weight:500;color:var(--color-text-primary);min-width:30px">1</span>
+    </div>
+  </div>
+  <div class="slider-row" style="flex-direction:column;align-items:flex-start;gap:4px">
+    <label style="font-size:13px;color:var(--color-text-secondary)">عدد المرايا</label>
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <input type="range" min="2" max="10" value="4" step="1" id="mirrors" oninput="recalc()">
+      <span id="mirrors-out" style="font-size:14px;font-weight:500;color:var(--color-text-primary);min-width:30px">4</span>
+    </div>
+  </div>
+</div>
+
+<div class="total-bar" id="totals-bar">
+  <div class="metric"><div class="metric-label">إجمالي التكلفة</div><div class="metric-val" id="t-total">0</div><div class="metric-sub">جنيه مصري</div></div>
+  <div class="metric"><div class="metric-label">طاقة مخزنة</div><div class="metric-val" id="t-energy">0</div><div class="metric-sub">kWh حرارية</div></div>
+  <div class="metric"><div class="metric-label">توفير سنوي</div><div class="metric-val" id="t-saving">0</div><div class="metric-sub">جنيه / سنة</div></div>
+  <div class="metric"><div class="metric-label">فترة الاسترداد</div><div class="metric-val" id="t-payback">0</div><div class="metric-sub">سنوات</div></div>
+</div>
+
+<div class="phase-badge">المرحلة 1 — الخزان والعزل</div>
+<div style="display:grid;grid-template-columns:2fr 80px 90px 100px 50px;gap:8px;padding:0 10px;margin-bottom:4px">
+  <span class="col-head">المادة / الجهاز</span><span class="col-head">الكمية</span><span class="col-head">سعر الوحدة</span><span class="col-head" id="ph1-total-head">الإجمالي</span><span class="col-head">المصدر</span>
+</div>
+
+<div class="item-row"><div><div class="item-name">صفائح فولاذ (3mm)</div><div class="item-spec">لصنع البوكس 1×1×1م</div><span class="tag tag-local">محلي</span></div><div id="q-steel">6 م²</div><div>320 ج/م²</div><div id="p-steel">1,920 ج</div><div>ورش السادات</div></div>
+
+<div class="item-row"><div><div class="item-name">صوف صخري Rock Wool</div><div class="item-spec">سُمك 10 سم - كل الجوانب</div><span class="tag tag-local">محلي</span></div><div id="q-wool">0.5 م³</div><div>850 ج/م²</div><div id="p-wool">2,550 ج</div><div>مصانع مصر</div></div>
+
+<div class="item-row"><div><div class="item-name">ألواح فيبرجلاس داخلي</div><div class="item-spec">حماية العزل من الحرارة</div><span class="tag tag-local">محلي</span></div><div id="q-fiber">6 م²</div><div>180 ج/م²</div><div id="p-fiber">1,080 ج</div><div>محلات البناء</div></div>
+
+<div class="item-row"><div><div class="item-name">أنبوبة نحاس حلزونية</div><div class="item-spec">قطر 2سم - 7 متر داخل الرمل</div><span class="tag tag-local">محلي</span></div><div>7 م</div><div>95 ج/م</div><div>665 ج</div><div>تجار نحاس</div></div>
+
+<div class="item-row"><div><div class="item-name">رمل ناعم نقي</div><div class="item-spec">بدون أملاح - جاف تماماً</div><span class="tag tag-local">محلي</span></div><div id="q-sand">1.4 طن</div><div>150 ج/طن</div><div id="p-sand">210 ج</div><div>مواجر السادات</div></div>
+
+<div class="item-row"><div><div class="item-name">مسامير + لحام + تشطيب</div><div class="item-spec">تجميع الخزان</div><span class="tag tag-local">محلي</span></div><div>—</div><div>—</div><div>800 ج</div><div>نجار/حداد</div></div>
+
+<div class="note-box" id="phase1-total">إجمالي المرحلة 1: <strong>7,225 ج</strong></div>
+
+<div class="phase-badge" style="margin-top:1.5rem">المرحلة 2 — المرايا التركيزية</div>
+<div class="item-row"><div><div class="item-name">مرايا Parabolic Trough</div><div class="item-spec">4م × 0.5م لكل مرآة</div><span class="tag tag-import">استيراد</span></div><div id="q-mirror">4 مرايا</div><div id="up-mirror">4,500 ج</div><div id="p-mirror">18,000 ج</div><div>أليبابا/موردين</div></div>
+
+<div class="item-row"><div><div class="item-name">هيكل حامل المرايا</div><div class="item-spec">حديد زاوية مجلفن</div><span class="tag tag-local">محلي</span></div><div id="q-frame">4 وحدات</div><div>600 ج</div><div id="p-frame">2,400 ج</div><div>ورش السادات</div></div>
+
+<div class="item-row"><div><div class="item-name">نظام تتبع شمسي يدوي</div><div class="item-spec">مفصلات قابلة للضبط</div><span class="tag tag-local">محلي</span></div><div>1 نظام</div><div>—</div><div>1,200 ج</div><div>حداد محلي</div></div>
+
+<div class="note-box" id="phase2-total">إجمالي المرحلة 2: <strong>21,600 ج</strong></div>
+
+<div class="phase-badge" style="margin-top:1.5rem">المرحلة 3 — حلقة الزيت الحراري</div>
+<div class="item-row"><div><div class="item-name">زيت Therminol / Dowtherm</div><div class="item-spec">للأنابيب والمبادل الحراري</div><span class="tag tag-import">استيراد</span><span class="tag tag-critical" style="margin-right:4px">أساسي</span></div><div>20 لتر</div><div>280 ج/لتر</div><div>5,600 ج</div><div>موردو كيماويات</div></div>
+
+<div class="item-row"><div><div class="item-name">أنابيب فولاذ Pre-insulated</div><div class="item-spec">PU Foam 5سم - 30 متر</div><span class="tag tag-local">محلي</span></div><div id="q-pipe">30 م</div><div>320 ج/م</div><div id="p-pipe">9,600 ج</div><div>شركات أنابيب</div></div>
+
+<div class="item-row"><div><div class="item-name">مضخة دوران Circulation Pump</div><div class="item-spec">مقاومة لـ 350°C - 220V</div><span class="tag tag-import">استيراد</span><span class="tag tag-critical" style="margin-right:4px">أساسي</span></div><div>1 مضخة</div><div>—</div><div>3,500 ج</div><div>موردو صناعي</div></div>
+
+<div class="item-row"><div><div class="item-name">مبادل حراري Heat Exchanger</div><div class="item-spec">Shell & Tube - نحاس/فولاذ</div><span class="tag tag-local">محلي</span></div><div>1 وحدة</div><div>—</div><div>4,800 ج</div><div>ورش هندسية</div></div>
+
+<div class="item-row"><div><div class="item-name">وصلات + صمامات + فيتينج</div><div class="item-spec">Gate valves + check valves</div><span class="tag tag-local">محلي</span></div><div>—</div><div>—</div><div>2,200 ج</div><div>محلات صنايعية</div></div>
+
+<div class="note-box">إجمالي المرحلة 3: <strong id="phase3-val">25,700 ج</strong></div>
+
+<div class="phase-badge" style="margin-top:1.5rem">المرحلة 4 — توليد الكهرباء (اختياري)</div>
+<div class="item-row"><div><div class="item-name">توربين بخاري صغير</div><div class="item-spec">1-5 kW - Low Pressure Steam</div><span class="tag tag-import">استيراد</span></div><div>1 وحدة</div><div>—</div><div>12,000 ج</div><div>أليبابا</div></div>
+
+<div class="item-row"><div><div class="item-name">مكثف Condenser</div><div class="item-spec">أنبوبة نحاس 4م + مروحة</div><span class="tag tag-local">محلي</span></div><div>1 وحدة</div><div>—</div><div>1,800 ج</div><div>ورش محلية</div></div>
+
+<div class="item-row"><div><div class="item-name">دينامو / مولد كهربائي</div><div class="item-spec">1-3 kW - 220V</div><span class="tag tag-local">محلي</span></div><div>1 وحدة</div><div>—</div><div>2,500 ج</div><div>محلات كهربا</div></div>
+
+<div class="item-row"><div><div class="item-name">خزان مياه معاد تدويره</div><div class="item-spec">20 لتر - الدورة المغلقة</div><span class="tag tag-local">محلي</span></div><div>1 وحدة</div><div>—</div><div>350 ج</div><div>محلات خردوات</div></div>
+
+<div class="item-row"><div><div class="item-name">لوحة تحكم + عدادات</div><div class="item-spec">مقياس ضغط + ترمومتر</div><span class="tag tag-local">محلي</span></div><div>—</div><div>—</div><div>1,200 ج</div><div>محلات كهربا</div></div>
+
+<div class="note-box">إجمالي المرحلة 4: <strong>17,850 ج</strong></div>
+
+<div class="phase-badge" style="margin-top:1.5rem;background:var(--color-background-secondary);color:var(--color-text-secondary)">تكاليف إضافية</div>
+<div class="item-row"><div><div class="item-name">عمالة تركيب</div><div class="item-spec">حداد + سباك + كهربائي</div><span class="tag tag-local">محلي</span></div><div>3 أيام</div><div>800 ج/يوم</div><div>2,400 ج</div><div>—</div></div>
+<div class="item-row"><div><div class="item-name">احتياطي ومتنوعات</div><div class="item-spec">10% من التكلفة الكلية</div></div><div>—</div><div>—</div><div id="p-contingency">7,000 ج</div><div>—</div></div>
+
+<div style="margin-top:1.5rem;padding:16px;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary)">
+  <div style="font-size:15px;font-weight:500;margin-bottom:12px;color:var(--color-text-primary)">ملخص التكاليف الكلية</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+    <div style="color:var(--color-text-secondary)">النظام بدون توليد كهرباء</div><div style="font-weight:500;color:var(--color-text-primary)" id="sum-without">~62,000 ج</div>
+    <div style="color:var(--color-text-secondary)">النظام الكامل مع الكهرباء</div><div style="font-weight:500;color:var(--color-text-primary)" id="sum-with">~80,000 ج</div>
+    <div style="color:var(--color-text-secondary)">بالدولار (تقريباً)</div><div style="font-weight:500;color:var(--color-text-primary)" id="sum-usd">~1,600 $</div>
+  </div>
+</div>
+
+<div style="margin-top:1.5rem">
+  <div class="sec-title">أين تجيب كل حاجة في السادات والمنطقة</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div class="note-box" style="border-right-color:#378ADD"><strong style="color:var(--color-text-primary)">ورش الحدادة</strong><br>منطقة المصانع - السادات<br>للبوكس والهيكل والأنابيب</div>
+    <div class="note-box" style="border-right-color:#639922"><strong style="color:var(--color-text-primary)">موردو العزل الحراري</strong><br>القاهرة / السادات<br>Rock Wool - Fiberglass</div>
+    <div class="note-box" style="border-right-color:#BA7517"><strong style="color:var(--color-text-primary)">المرايا التركيزية</strong><br>Alibaba / Aliexpress<br>شحن 3-4 أسابيع</div>
+    <div class="note-box" style="border-right-color:#E24B4A"><strong style="color:var(--color-text-primary)">الزيت الحراري</strong><br>شركات الكيماويات الصناعية<br>القاهرة - مدينة نصر</div>
+  </div>
+</div>
+
+<button onclick="sendPrompt('ازاي أعمل حسابات الكفاءة الحرارية للنظام ده؟')" style="margin-top:1rem;width:100%">احسبلي الكفاءة الحرارية الكاملة ↗</button>
+<button onclick="sendPrompt('عايز خطة تنفيذ تفصيلية أسبوع بأسبوع لمشروع Enactus')" style="margin-top:8px;width:100%">خطة التنفيذ أسبوع بأسبوع ↗</button>
+
+</div>
+
+<script>
+const BASE = {
+  steel: {qty:6, unit:320},
+  wool: {qty:3, unit:850},
+  fiber: {qty:6, unit:180},
+  sand: {qty:1.4, unit:150},
+  mirror_unit: 4500,
+  frame_unit: 600,
+  pipe_unit: 320,
+};
+
+function fmt(n){return Math.round(n).toLocaleString('ar-EG');}
+
+function recalc(){
+  const tank = parseInt(document.getElementById('tank-size').value);
+  const mirrors = parseInt(document.getElementById('mirrors').value);
+  document.getElementById('tank-size-out').textContent = tank;
+  document.getElementById('mirrors-out').textContent = mirrors;
+
+  const steelArea = 6 * tank;
+  const woolVol = 0.5 * tank;
+  const fiberArea = 6 * tank;
+  const sandTon = 1.4 * tank;
+
+  const pSteel = steelArea * BASE.steel.unit;
+  const pWool = woolVol * 1000 * BASE.wool.unit / 1000 * tank * 6;
+  const pWoolFixed = tank * 3 * 850;
+  const pFiber = fiberArea * BASE.fiber.unit;
+  const pSand = sandTon * BASE.sand.unit;
+  const phase1 = pSteel + pWoolFixed + pFiber + 665 + pSand + 800;
+
+  document.getElementById('q-steel').textContent = steelArea + ' م²';
+  document.getElementById('p-steel').textContent = fmt(pSteel) + ' ج';
+  document.getElementById('q-sand').textContent = sandTon.toFixed(1) + ' طن';
+  document.getElementById('p-sand').textContent = fmt(pSand) + ' ج';
+  document.getElementById('phase1-total').innerHTML = 'إجمالي المرحلة 1: <strong>' + fmt(phase1) + ' ج</strong>';
+
+  const pMirrors = mirrors * BASE.mirror_unit;
+  const pFrames = mirrors * BASE.frame_unit;
+  const phase2 = pMirrors + pFrames + 1200;
+  document.getElementById('q-mirror').textContent = mirrors + ' مرايا';
+  document.getElementById('p-mirror').textContent = fmt(pMirrors) + ' ج';
+  document.getElementById('q-frame').textContent = mirrors + ' وحدات';
+  document.getElementById('p-frame').textContent = fmt(pFrames) + ' ج';
+
+  const pipeLen = 30 + (tank - 1) * 10;
+  const pPipe = pipeLen * BASE.pipe_unit;
+  const phase3 = 5600 + pPipe + 3500 + 4800 + 2200;
+  document.getElementById('q-pipe').textContent = pipeLen + ' م';
+  document.getElementById('p-pipe').textContent = fmt(pPipe) + ' ج';
+
+  const phase4 = 17850;
+  const labor = 2400;
+  const subtotal = phase1 + phase2 + phase3 + labor;
+  const contingency = Math.round(subtotal * 0.10);
+  const totalWithout = subtotal + contingency;
+  const totalWith = totalWithout + phase4;
+
+  document.getElementById('p-contingency').textContent = fmt(contingency) + ' ج';
+  document.getElementById('sum-without').textContent = '~' + fmt(totalWithout) + ' ج';
+  document.getElementById('sum-with').textContent = '~' + fmt(totalWith) + ' ج';
+  document.getElementById('sum-usd').textContent = '~' + Math.round(totalWith / 50) + ' $';
+
+  const energyKwh = tank * mirrors * 4.5;
+  const savingAnnual = energyKwh * 365 * 0.6 * 1.2;
+  const payback = totalWithout / savingAnnual;
+
+  document.getElementById('t-total').textContent = fmt(totalWithout) + ' ج';
+  document.getElementById('t-energy').textContent = Math.round(energyKwh) + ' kWh';
+  document.getElementById('t-saving').textContent = fmt(Math.round(savingAnnual));
+  document.getElementById('t-payback').textContent = payback.toFixed(1) + ' سنة';
+}
+
+recalc();
+</script>
